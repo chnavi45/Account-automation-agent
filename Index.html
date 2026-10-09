@@ -1,1 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Account Automation Agent</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f1f5f9;
+  margin: 0;
+  padding: 20px;
+  color: #172033;
+}
+.container {
+  max-width: 900px;
+  margin: auto;
+}
+h1 { color: #174ea6; }
+.card {
+  background: white;
+  padding: 18px;
+  margin: 15px 0;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px #00000012;
+}
+input, select, button {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px;
+  margin: 7px 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  font-size: 15px;
+}
+button {
+  background: #174ea6;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+button:hover { background: #123b7c; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th, td {
+  text-align: left;
+  padding: 10px;
+  border-bottom: 1px solid #e2e8f0;
+  overflow-wrap: anywhere;
+}
+.small { color: #64748b; font-size: 13px; }
+.table-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Account Automation Agent</h1>
+  <p>Client task management dashboard</p>
 
+  <div class="card">
+    <h2>Add New Task</h2>
+    <form id="taskForm">
+      <input id="client" placeholder="Client name" required>
+      <input id="website" placeholder="Website name" required>
+      <select id="status">
+        <option>Pending</option>
+        <option>In Progress</option>
+        <option>Waiting for Client</option>
+        <option>Completed</option>
+      </select>
+      <button type="submit">Add Task</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Task Summary</h2>
+    <p id="summary">Total tasks: 0</p>
+    <button id="export">Export Task Report (CSV)</button>
+    <p class="small">This dashboard tracks tasks only. It does not create accounts automatically.</p>
+  </div>
+
+  <div class="card">
+    <h2>Client Tasks</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Client</th>
+            <th>Website</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="taskList"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const form = document.getElementById("taskForm");
+const list = document.getElementById("taskList");
+const summary = document.getElementById("summary");
+
+let tasks = [];
+
+function render() {
+  list.innerHTML = "";
+  tasks.forEach((task, index) => {
+    const row = document.createElement("tr");
+
+    [task.client, task.website, task.status].forEach(value => {
+      const cell = document.createElement("td");
+      cell.textContent = value;
+      row.appendChild(cell);
+    });
+
+    const actionCell = document.createElement("td");
+    const remove = document.createElement("button");
+    remove.textContent = "Delete";
+    remove.onclick = () => {
+      tasks.splice(index, 1);
+      render();
+    };
+    actionCell.appendChild(remove);
+    row.appendChild(actionCell);
+    list.appendChild(row);
+  });
+
+  summary.textContent = "Total tasks: " + tasks.length;
+}
+
+form.addEventListener("submit", event => {
+  event.preventDefault();
+  tasks.push({
+    client: document.getElementById("client").value.trim(),
+    website: document.getElementById("website").value.trim(),
+    status: document.getElementById("status").value
+  });
+  form.reset();
+  render();
+});
+
+document.getElementById("export").addEventListener("click", () => {
+  const rows = [["Client", "Website", "Status"],
+    ...tasks.map(t => [t.client, t.website, t.status])];
+
+  const csv = rows.map(row =>
+    row.map(value => '"' + value.replace(/"/g, '""') + '"').join(",")
+  ).join("\r\n");
+
+  const blob = new Blob(["\uFEFF" + csv], {
+    type: "text/csv;charset=utf-8;"
+  });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "client-tasks.csv";
+  link.click();
+  URL.revokeObjectURL(link.href);
+});
+</script>
+</body>
+</html>
